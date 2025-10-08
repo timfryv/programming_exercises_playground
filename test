@@ -1,1 +1,6 @@
+name = "philipp"
 
+if name.startswith("p")
+print("the name starts with P")
+else:
+      print("the name does not start with p")
