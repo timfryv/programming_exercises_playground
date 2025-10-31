@@ -1,1 +1,15 @@
-
+Dictionary = {
+1: "Monday",
+2: "tuesday",
+3: "wednesday",
+4: "thursday",
+5: "friday",
+6: "saturday",
+7: "sunday"
+}
+while True:
+    choice = int(input("please enter a value: "))
+    if choice in Dictionary:
+        print(Dictionary[choice])
+    else:
+        print("a number from 1 to 7, remeber")
