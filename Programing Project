@@ -1,0 +1,130 @@
+import csv
+from pathlib import Path
+
+DECK_DIRECTORY = Path("decks")
+DECK_DIRECTORY.mkdir(exist_ok=True)
+HEADERS = ["question", "answer", "level"]
+
+decks = sorted(file.stem for file in DECK_DIRECTORY.glob("*.csv"))
+
+
+print("Hello!")
+print("Welcome to your Console Based Flashcard-App")
+
+#Insert a check if files are available -> if no then...
+while True:
+    print("what would you like to do today?")
+    print("1. Learn from a deck.")
+    print("2. Create a deck.")
+    print("3. Delete a deck.")
+    print("4. Check your knowledge level.")
+    print("(To terminate the app press enter)")
+    selection = input("Enter your choice: ")
+
+    # load deck selection
+    if selection == "1":
+        print("These are the available decks:", decks)
+        name = input("Enter the deck you would like to open: ")
+        deck_path = DECK_DIRECTORY / f"{name}.csv"
+
+        with open(deck_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            cards = [row for row in reader if row["question"] and row["answer"] and row ["level"]]
+            correct = 0
+
+            for i, card in enumerate(cards, start=1):
+                print(f"\n[{i}/{len(cards)}] Q: {card['question']}")
+                a = input("What's the answer? ")
+
+                if a == card["answer"]:
+                    correct += 1
+                    print(f"Correct!")
+                    card["level"] = str((int(card["level"]) + 1))
+
+                elif a == "":
+                    print("learning session has been terminated")
+                    break
+
+                else:
+                    print(f"Wrong! the answer is {card['answer']}")
+                    # I want to decrease the Level in the row
+                    card["level"] = str((int(card["level"]) - 1))
+                with open(deck_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=HEADERS)
+                    writer.writeheader()
+                    for c in cards:
+                        # ensure only known columns are written
+                        writer.writerow({
+                            "question": c["question"],
+                            "answer": c["answer"],
+                            "level": c["level"],
+                        })
+
+
+                    print("Progress saved.")
+            print("Congratulations! You finished the deck!")
+            print("Returning to main menu")
+    # load deck creator
+    elif selection == "2":
+        raw_name=input("Name your deck:")
+
+        if raw_name == "":
+            print("Deck creation cancelled")
+        else:
+            deck_path = DECK_DIRECTORY / f"{raw_name}.csv"
+
+            with deck_path.open("w",newline="",encoding="utf-8")as f:
+                writer = csv.writer(f)
+                writer.writerow(HEADERS)
+                print(f"Deck {raw_name} created.")
+
+                a = (input("would you like to populate the deck? Y/N")).lower()
+                if a == "y":
+                    counter = 0
+                    print("Fill out the questions and answers for your deck. Leave the question empty to finish")
+                    while True:
+                        question = input("Question: ")
+                        if question == "":
+                            break
+                        answer = input("Answer: ")
+                        if answer == "":
+                            print("Answer cannot be empty, card creation cancelled")
+                        writer.writerow([question,answer,0])
+                        counter += 1
+                    print("Deck creation complete. You added ", counter, "cards to your deck.")
+    # load deck deleter
+    elif selection == "3":
+        print("These are the available decks:", decks)
+        raw_name = input("What deck do you want to delete?")
+        file_path = DECK_DIRECTORY / f"{raw_name}.csv"
+        if file_path.exists():
+            file_path.unlink()
+            print("File deleted.")
+        else:
+            print("File not found.")
+    # load level calculator
+    elif selection == "4":
+        print("this is your level for each deck")
+        decks = sorted(DECK_DIRECTORY.glob("*.csv"))
+
+        if not decks:
+            print("No decks found.")
+        else:
+            for deck_path in decks:
+                with deck_path.open("r", newline="", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    levels = []
+                    for row in reader:
+                        if row.get("level") and row.get("level").isdigit():
+                            levels.append(int(row["level"]))
+
+                    if levels:
+                        avg = sum(levels) / len(levels)
+                        print(f"{deck_path.stem}: average level {avg:.2f}  ({len(levels)} cards)")
+                    else:
+                        print(f"{deck_path.stem}: no valid level data")
+
+        input("\nPress Enter to continue...")
+
+    else:
+        exit()
